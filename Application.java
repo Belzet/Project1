@@ -153,24 +153,24 @@ public class Application{
                       "to_char(arr_time, 'HH24:MI') as arr,fare,price, 2 stops " +
                       "FROM two_connections " +
                       "WHERE src = '" + src + "' and dst = '" + dst + "' " +
-                      "AND to_char(dep_date, 'DD-MM-YYYY') = '" + dep_date + "' "; 
+                      "AND to_char(dep_date, 'DD-MM-YYYY') = '" + dep_date + "' ";
         }
 
         Connection m_con;
         String flights, ret_flights;
         //Display flights with specifications given by user
-        flights = "SELECT rn, fno, fno2, fno3, dep_date, src, dst, dep, arr, fare, price, stops " +
+        flights = "SELECT rn, fno, fno2, fno3, dep_date, src, dst, dep, arr, price, stops " +
                   "FROM ( " +
-                    "SELECT fno, fno2, fno3, dep_date, src, dst, dep, arr, fare, price, stops, row_number() over "+ sortOptions +
+                    "SELECT fno, fno2, fno3, dep_date, src, dst, dep, arr, price, stops, row_number() over "+ sortOptions +
                     "FROM ( " +
                       "SELECT flightno as fno, '' fno2, '' fno3, to_char(dep_date, 'DD-MM-YYYY') as dep_date, src,dst,to_char(dep_time, 'HH24:MI') as dep, " +
-                      "to_char(arr_time, 'HH24:MI') as arr,fare,price, 0 stops " +
+                      "to_char(arr_time, 'HH24:MI') as arr,price, 0 stops " +
                       "FROM available_flights " +
                       "WHERE src = '" + src + "' and dst = '" + dst + "' " +
                       "AND to_char(dep_date, 'DD-MM-YYYY') = '" + dep_date + "' " +
-		      "UNION " +
-		      "SELECT flightno1 as fno, flightno2 as fno2, '' fno3, to_char(dep_date, 'DD-MM-YYYY') as dep_date, src,dst,to_char(dep_time, 'HH24:MI') as dep, " +
-                      "to_char(arr_time, 'HH24:MI') as arr,fare,price, 1 stops " +
+		                  "UNION " +
+		                  "SELECT flightno1 as fno, flightno2 as fno2, '' fno3, to_char(dep_date, 'DD-MM-YYYY') as dep_date, src,dst,to_char(dep_time, 'HH24:MI') as dep, " +
+                      "to_char(arr_time, 'HH24:MI') as arr,price, 1 stops " +
                       "FROM one_connection " +
                       "WHERE src = '" + src + "' and dst = '" + dst + "' " +
                       "AND to_char(dep_date, 'DD-MM-YYYY') = '" + dep_date + "' " +
@@ -257,18 +257,18 @@ public class Application{
                       "group by f.flightno, sf.dep_date, f.src, f.dst, f.dep_time, f.est_dur,a2.tzone, " +
                       "a1.tzone, fa.fare, fa.limit, fa.price " +
                       "having fa.limit-count(tno) > 0";
-      twoFlights = "create view one_connection (src,dst,dep_date,flightno1,flightno2, layover,price) as " +
-			"select a1.src, a2.dst, a1.dep_date, a1.flightno, a2.flightno, a2.dep_time-a1.arr_time, " +
-			"min(a1.price+a2.price) " +
-			"from available_flights a1, available_flights a2 " +
-			"where a1.dst=a2.src and a1.arr_time +1.5/24 <=a2.dep_time and a1.arr_time +5/24 >=a2.dep_time " +
-			"group by a1.src, a2.dst, a1.dep_date, a1.flightno, a2.flightno, a2.dep_time, a1.arr_time ";
-      threeFlights = "create view two_connections (src,dst,dep_date,flightno1,flightno2, flightno3, layover,price) as " +
-			"select a1.src, a3.dst, a1.dep_date, a1.flightno, a2.flightno, a3.flightno, (a2.dep_time-a1.arr_time+(a3.dep_time-a2.arr_time)), " +
-			"min(a1.price+a2.price+a2.price) " +
-			"from available_flights a1, available_flights a2, available_flights a3 " +
-			"where a1.dst=a2.src and a2.dst=a3.src and a1.arr_time +1.5/24 <=a2.dep_time and a1.arr_time +5/24 >=a2.dep_time and a2.arr_time +1.5/24 <=a3.dep_time and a2.arr_time +5/24 >=a3.dep_time " +
-			"group by a1.src, a3.dst, a1.dep_date, a1.flightno, a2.flightno, a3.flightno, a2.dep_time, a1.arr_time, a3.dep_time, a2.arr_time ";
+      twoFlights = "create view one_connection (src,dst,dep_date,flightno1,flightno2, layover,price, dep_time, arr_time) as " +
+			                "select a1.src, a2.dst, a1.dep_date, a1.flightno, a2.flightno, a2.dep_time-a1.arr_time, " +
+			                "min(a1.price+a2.price), a1.dep_time, a2.arr_time " +
+			                "from available_flights a1, available_flights a2 " +
+			                "where a1.dst=a2.src and a1.arr_time +1.5/24 <=a2.dep_time and a1.arr_time +5/24 >=a2.dep_time " +
+			                "group by a1.src, a2.dst, a1.dep_date, a1.flightno, a2.flightno, a2.dep_time, a1.arr_time, a1.dep_time, a2.arr_time ";
+      threeFlights = "create view two_connections (src,dst,dep_date,flightno1,flightno2, flightno3, layover,price, dep_time, arr_time) as " +
+			                  "select a1.src, a3.dst, a1.dep_date, a1.flightno, a2.flightno, a3.flightno, (a2.dep_time-a1.arr_time+(a3.dep_time-a2.arr_time)), " +
+			                  "min(a1.price+a2.price+a2.price), a1.dep_time, a3.arr_time " +
+			                  "from available_flights a1, available_flights a2, available_flights a3 " +
+			                  "where a1.dst=a2.src and a2.dst=a3.src and a1.arr_time +1.5/24 <=a2.dep_time and a1.arr_time +5/24 >=a2.dep_time and a2.arr_time +1.5/24 <=a3.dep_time and a2.arr_time +5/24 >=a3.dep_time " +
+			                  "group by a1.src, a3.dst, a1.dep_date, a1.flightno, a2.flightno, a3.flightno, a2.dep_time, a1.arr_time, a3.dep_time, a2.arr_time, a1.dep_time, a3.arr_time ";
       Statement stmt;
 
 
@@ -279,8 +279,8 @@ public class Application{
 
         stmt = m_con.createStatement();
         stmt.executeQuery(dropView1);
-	stmt.executeQuery(dropView2);
-	stmt.executeQuery(dropView3);
+	      stmt.executeQuery(dropView2);
+	      stmt.executeQuery(dropView3);
 
         stmt.close();
         m_con.close();
@@ -293,13 +293,14 @@ public class Application{
 
         stmt = m_con.createStatement();
         stmt.executeQuery(singleFlight);
-	stmt.executeQuery(twoFlights);
-	stmt.executeQuery(threeFlights);
+	      stmt.executeQuery(twoFlights);
+	      stmt.executeQuery(threeFlights);
 
         stmt.close();
         m_con.close();
       } catch(SQLException ex) {
-
+        System.err.println("SQLException: " +
+        ex.getMessage());
       }
       return;
     }
